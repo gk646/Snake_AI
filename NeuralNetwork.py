@@ -76,18 +76,9 @@ def half_random_model(model1):
     model2 = get_random_model()
     weights1 = model1.get_weights()
     weights2 = model2.get_weights()
-    crossover_point = random.randint(0, len(weights1))
-
-    # Crossover the weights
-    temp_weights = weights1[crossover_point:]
-    weights1[crossover_point:] = weights2[crossover_point:]
-    weights2[crossover_point:] = temp_weights
-
-    # Set the weights of the models
-    model1.set_weights(weights1)
+    crossover_point = random.randint(0, len(weights2))
+    weights2[crossover_point:] = weights1[crossover_point:]
     model2.set_weights(weights2)
 
-    # Compile and train the models
-    model1.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     model2.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    return model1
+    return model2
