@@ -2,3 +2,4 @@
 *.xml
 *.h5
 *model
+*.pb
