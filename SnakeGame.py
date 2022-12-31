@@ -20,8 +20,8 @@ class SnakeGame:
         self.highest_score2 = 0
         pygame.font.init()
         # Window size
-        self.window_x = 1000
-        self.window_y = 1000
+        self.window_x = 500
+        self.window_y = 500
 
         self.window = pygame.display.set_mode((self.window_x, self.window_y))
         # defining colors
@@ -153,15 +153,13 @@ class SnakeGame:
     def train_models(self, crossover_1, crossover_2):
         scores_plot = []
         c = 0
-        self.highest_score2 = 0
-        self.highest_score1 = 0
-        for b in range(15):
+        for b in range(25):
             scores = []
             weights = []
             crossover_1, crossover_2 = NeuralNetwork.cross_over(crossover_1, crossover_2)
-            for i in range(25):
-                half_random = NeuralNetwork.half_random_model(crossover_1)
-                print("First Loop - " + str(i))
+            print("First Loop - " + str(b))
+            for i in range(50):
+                half_random = NeuralNetwork.cross_over_into_new(crossover_1, crossover_2)
                 self.reset_game()
                 while True:
                     output = half_random.predict(self.get_game_state(), verbose=0)
@@ -184,7 +182,6 @@ class SnakeGame:
                     if self.snake_position[1] < 0 or self.snake_position[1] > 50:
                         break
 
-                    # Touching the snake body
                     for block in self.snake_body[1:]:
                         if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
                             break
@@ -192,26 +189,22 @@ class SnakeGame:
                     scaled_win = pygame.transform.scale(self.surface, self.window.get_size())
                     self.window.blit(scaled_win, (0, 0))
                     pygame.display.flip()
-                    # Refresh game screen
-                    pygame.display.update()
-                    # Frame Per Second /Refresh Rate
-                    self.fps.tick(self.snake_speed)
                 score = self.score * 1000 + self.moved_fields
                 weights.append(half_random.get_weights())
                 scores.append(score)
             scores = np.array(scores)
             scores_plot.append([scores.mean(), c])
             c += 1
-            print(scores.mean())
             if np.max(scores) > self.highest_score1:
                 crossover_1 = NeuralNetwork.build_model()
                 crossover_1.set_weights(weights[scores.argmax()])
                 self.highest_score1 = np.max(scores)
+            print("Highscore 1: " + str(self.highest_score1) + " ///  Mean: "+ str(scores.mean()))
             scores = []
             weights = []
-            for i in range(25):
-                half_random2 = NeuralNetwork.half_random_model(crossover_2)
-                print("Second Loop - " + str(i))
+            print("Second Loop - " + str(b))
+            for i in range(50):
+                half_random2 = NeuralNetwork.cross_over_into_new(crossover_1,crossover_2)
                 self.reset_game()
                 while True:
                     output = half_random2.predict(self.get_game_state(), verbose=0)
@@ -242,31 +235,26 @@ class SnakeGame:
                     scaled_win = pygame.transform.scale(self.surface, self.window.get_size())
                     self.window.blit(scaled_win, (0, 0))
                     pygame.display.flip()
-                    # Refresh game screen
-                    pygame.display.update()
-                    # Frame Per Second /Refresh Rate
-                    self.fps.tick(self.snake_speed)
                 score = self.score * 1000 + self.moved_fields
                 weights.append(half_random2.get_weights())
                 scores.append(score)
             scores = np.array(scores)
             scores_plot.append([scores.mean(), c])
             c += 1
-            print(scores.mean())
             if np.max(scores) > self.highest_score2:
                 crossover_2 = NeuralNetwork.build_model()
                 crossover_2.set_weights(weights[scores.argmax()])
-                self.highest_score1 = np.max(scores)
-
-        best_model, best_model2 = NeuralNetwork.cross_over(crossover_1, crossover_2)
-        best_model.save('genetic1')
-        best_model2.save('genetic2')
-        iterations, scores = zip(*scores_plot)
-        plt.plot(scores, iterations)
-        plt.xlabel('Iteration')
-        plt.ylabel('Score')
-        plt.title('Scores over Iterations')
-        plt.show()
+                self.highest_score2 = np.max(scores)
+            print("Highscore 2: " + str(self.highest_score2) + " //// Mean: " + str(scores.mean()))
+            iterations, scores = zip(*scores_plot)
+            plt.plot(scores, iterations)
+            plt.xlabel('Iteration')
+            plt.ylabel('Score')
+            plt.title('Scores over Iterations')
+            plt.show()
+            best_model, best_model2 = NeuralNetwork.cross_over(crossover_1, crossover_2)
+            best_model.save('genetic1')
+            best_model2.save('genetic2')
 
 
 game = SnakeGame(200)
