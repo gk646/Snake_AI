@@ -3,3 +3,5 @@
 *.h5
 *model
 *.pb
+*.index
+*.data
