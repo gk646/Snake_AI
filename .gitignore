@@ -4,4 +4,4 @@
 *model
 *.pb
 *.index
-*.data
+*variables
