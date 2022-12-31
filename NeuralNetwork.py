@@ -82,3 +82,19 @@ def half_random_model(model1):
 
     model2.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     return model2
+
+
+def cross_over_into_new(model1, model2):
+    new_model = build_model()
+    new_weights = new_model.get_weights()
+    weights1 = model1.get_weights()
+    weights2 = model2.get_weights()
+
+    crossover_point = random.randint(0, len(new_weights))
+
+    new_weights[crossover_point:] = weights2[crossover_point:]
+    new_weights[:crossover_point] = weights1[:crossover_point]
+
+    new_model.set_weights(new_weights)
+    new_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    return new_model
