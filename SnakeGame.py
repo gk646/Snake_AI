@@ -8,9 +8,7 @@ import NeuralNetwork
 import numpy as np
 import cv2
 import tensorflow as tf
-
-tf.compat.v1.logging.set_verbosity(0)
-tf.compat.v1.logging.set_verbosity('ERROR')
+import matplotlib.pyplot as plt
 
 
 class SnakeGame:
@@ -61,10 +59,11 @@ class SnakeGame:
         if self.change_to == 'RIGHT' and self.direction != 'LEFT':
             self.direction = 'RIGHT'
         if self.moved_fields < 250:
-            self.moved_fields+=1
+            self.moved_fields += 1
         else:
-            self.score -=250
-            self.snake_position = [51,51]
+            self.score = 0
+            self.moved_fields = 10
+            self.snake_position = [51, 51]
         # Moving the snake
         if self.direction == 'UP':
             self.snake_position[1] -= self.snake_movement
@@ -151,19 +150,21 @@ class SnakeGame:
         self.score = 0
         self.moved_fields = 0
 
-    def train_models(self, model):
-        crossover_1 = NeuralNetwork.get_random_model()
-        crossover_2 = NeuralNetwork.get_random_model()
-        for b in range(10):
+    def train_models(self, crossover_1, crossover_2):
+        scores_plot = []
+        c = 0
+        self.highest_score2 = 0
+        self.highest_score1 = 0
+        for b in range(15):
             scores = []
             weights = []
             crossover_1, crossover_2 = NeuralNetwork.cross_over(crossover_1, crossover_2)
             for i in range(25):
-                crossover_1 = NeuralNetwork.half_random_model(crossover_1)
+                half_random = NeuralNetwork.half_random_model(crossover_1)
                 print("First Loop - " + str(i))
                 self.reset_game()
                 while True:
-                    output = crossover_1.predict(self.get_game_state(), verbose=0)
+                    output = half_random.predict(self.get_game_state(), verbose=0)
                     action = np.argmax(output)
                     if action == 0:
                         self.change_to = 'UP'
@@ -196,20 +197,24 @@ class SnakeGame:
                     # Frame Per Second /Refresh Rate
                     self.fps.tick(self.snake_speed)
                 score = self.score * 1000 + self.moved_fields
-                weights.append(model.get_weights())
+                weights.append(half_random.get_weights())
                 scores.append(score)
             scores = np.array(scores)
+            scores_plot.append([scores.mean(), c])
+            c += 1
             print(scores.mean())
-            crossover_1 = NeuralNetwork.build_model()
-            crossover_1.set_weights(weights[scores.argmax()])
+            if np.max(scores) > self.highest_score1:
+                crossover_1 = NeuralNetwork.build_model()
+                crossover_1.set_weights(weights[scores.argmax()])
+                self.highest_score1 = np.max(scores)
             scores = []
             weights = []
             for i in range(25):
-                crossover_2 = NeuralNetwork.half_random_model(crossover_2)
+                half_random2 = NeuralNetwork.half_random_model(crossover_2)
                 print("Second Loop - " + str(i))
                 self.reset_game()
                 while True:
-                    output = crossover_2.predict(self.get_game_state(), verbose=0)
+                    output = half_random2.predict(self.get_game_state(), verbose=0)
                     action = np.argmax(output)
                     if action == 0:
                         self.change_to = 'UP'
@@ -242,20 +247,31 @@ class SnakeGame:
                     # Frame Per Second /Refresh Rate
                     self.fps.tick(self.snake_speed)
                 score = self.score * 1000 + self.moved_fields
-                weights.append(model.get_weights())
+                weights.append(half_random2.get_weights())
                 scores.append(score)
             scores = np.array(scores)
+            scores_plot.append([scores.mean(), c])
+            c += 1
             print(scores.mean())
-            crossover_2 = NeuralNetwork.build_model()
-            crossover_2.set_weights(weights[scores.argmax()])
+            if np.max(scores) > self.highest_score2:
+                crossover_2 = NeuralNetwork.build_model()
+                crossover_2.set_weights(weights[scores.argmax()])
+                self.highest_score1 = np.max(scores)
 
-
-        best_model,best_model2 = NeuralNetwork.cross_over(crossover_1,crossover_2)
+        best_model, best_model2 = NeuralNetwork.cross_over(crossover_1, crossover_2)
         best_model.save('genetic1')
+        best_model2.save('genetic2')
+        iterations, scores = zip(*scores_plot)
+        plt.plot(scores, iterations)
+        plt.xlabel('Iteration')
+        plt.ylabel('Score')
+        plt.title('Scores over Iterations')
+        plt.show()
 
 
 game = SnakeGame(200)
-snakeNet = NeuralNetwork.get_random_model()
-game.train_models(model=snakeNet)
+snakeNet1 = keras.models.load_model('genetic1')
+snakeNet2 = keras.models.load_model('genetic2')
+game.train_models(snakeNet1, snakeNet2)
 
 # snakeNet.save("snakeModel")
