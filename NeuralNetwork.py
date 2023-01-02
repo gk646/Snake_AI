@@ -98,3 +98,44 @@ def cross_over_into_new(model1, model2):
     new_model.set_weights(new_weights)
     new_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     return new_model
+
+
+def build_small_model():
+    model = keras.Sequential()
+    model.add(keras.layers.Dense(units=8, activation='relu', input_shape=(8, )))
+    model.add(keras.layers.Dense(units=16, activation='relu', ))
+    model.add(keras.layers.Dense(units=16, activation='relu', ))
+    model.add(keras.layers.Dense(units=8, activation='relu', ))
+    model.add(keras.layers.Dense(units=4, activation='softmax'))
+
+    model.compile(optimizer='adam',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+    return model
+def get_random_model_small():
+    model = keras.Sequential()
+    model.add(keras.layers.Dense(units=8, activation='relu', input_shape=(8,)))
+    model.add(keras.layers.Dense(units=16, activation='relu', kernel_initializer=initializers.random_normal))
+    model.add(keras.layers.Dense(units=16, activation='relu', kernel_initializer=initializers.random_normal))
+    model.add(keras.layers.Dense(units=8, activation='relu', kernel_initializer=initializers.random_normal))
+    model.add(keras.layers.Dense(units=4, activation='softmax', kernel_initializer=initializers.random_normal))
+
+    model.compile(optimizer='adam',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+    return model
+
+def small_crossover_into_one(model1, model2):
+    new_model = build_small_model()
+    new_weights = new_model.get_weights()
+    weights1 = model1.get_weights()
+    weights2 = model2.get_weights()
+
+    crossover_point = random.randint(0, len(new_weights))
+
+    new_weights[crossover_point:] = weights2[crossover_point:]
+    new_weights[:crossover_point] = weights1[:crossover_point]
+
+    new_model.set_weights(new_weights)
+    new_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    return new_model

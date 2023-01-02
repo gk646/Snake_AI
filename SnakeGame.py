@@ -105,7 +105,7 @@ class SnakeGame:
 
     def play_with_ai(self, model):
         while not self.game_over_variable:
-            output = model.predict(self.get_game_state())
+            output = model.predict(self.get_gamestate_4directions())
             action = np.argmax(output)
             if action == 0:
                 self.change_to = 'UP'
@@ -136,6 +136,22 @@ class SnakeGame:
             # Frame Per Second /Refresh Rate
             self.fps.tick(self.snake_speed)
 
+    def get_gamestate_4directions(self):
+        distance_from_wall_up = self.snake_position[1] - 1
+        distance_from_wall_left = self.snake_position[0] - 1
+        distance_from_wall_down = abs(self.snake_position[1] - 50 - 1)
+        distance_from_wall_right = abs(self.snake_position[0] - 50 - 1)
+
+        distance_from_food_up = self.snake_position[1] - self.fruit_position[1]
+        distance_from_food_left = self.snake_position[0] - self.fruit_position[0]
+        distance_from_food_down = self.fruit_position[1] - self.snake_position[1]
+        distance_from_food_right = self.fruit_position[0] - self.snake_position[0]
+
+        # distance from snake
+        return np.array([[distance_from_food_right, distance_from_food_down, distance_from_food_left,
+                          distance_from_food_up, distance_from_wall_right, distance_from_wall_up,
+                          distance_from_wall_down, distance_from_wall_left]])
+
     def reset_game(self):
         self.snake_position = [25, 25]
         self.snake_body = [[25, 25],
@@ -150,7 +166,7 @@ class SnakeGame:
         self.score = 0
         self.moved_fields = 0
 
-    def train_models(self, crossover_1, crossover_2):
+    def train_models_genetic(self, crossover_1, crossover_2):
         scores_plot = []
         c = 0
         for b in range(25):
@@ -199,12 +215,12 @@ class SnakeGame:
                 crossover_1 = NeuralNetwork.build_model()
                 crossover_1.set_weights(weights[scores.argmax()])
                 self.highest_score1 = np.max(scores)
-            print("Highscore 1: " + str(self.highest_score1) + " ///  Mean: "+ str(scores.mean()))
+            print("Highscore 1: " + str(self.highest_score1) + " ///  Mean: " + str(scores.mean()))
             scores = []
             weights = []
             print("Second Loop - " + str(b))
             for i in range(50):
-                half_random2 = NeuralNetwork.cross_over_into_new(crossover_1,crossover_2)
+                half_random2 = NeuralNetwork.cross_over_into_new(crossover_1, crossover_2)
                 self.reset_game()
                 while True:
                     output = half_random2.predict(self.get_game_state(), verbose=0)
@@ -256,10 +272,117 @@ class SnakeGame:
             best_model.save('genetic1')
             best_model2.save('genetic2')
 
+    def train_model_genetic_heuristic(self, crossover_1, crossover_2):
+        scores_plot = []
+        c = 0
+        for b in range(25):
+            scores = []
+            weights = []
+            print("First Loop - " + str(b))
+            for i in range(25):
+                new_mutant = NeuralNetwork.small_crossover_into_one(crossover_1, crossover_2)
+                self.reset_game()
+                while True:
+                    output = new_mutant.predict(self.get_gamestate_4directions(), verbose=0)
+                    action = np.argmax(output)
+                    if action == 0:
+                        self.change_to = 'UP'
+                    elif action == 1:
+                        self.change_to = 'DOWN'
+                    elif action == 2:
+                        self.change_to = 'LEFT'
+                    elif action == 3:
+                        self.change_to = 'RIGHT'
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            sys.exit()
+                    self.rest_of_game()
+                    if self.snake_position[0] < 0 or self.snake_position[0] > 50:
+                        break
+                    if self.snake_position[1] < 0 or self.snake_position[1] > 50:
+                        break
+
+                    for block in self.snake_body[1:]:
+                        if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
+                            break
+
+                    scaled_win = pygame.transform.scale(self.surface, self.window.get_size())
+                    self.window.blit(scaled_win, (0, 0))
+                    pygame.display.flip()
+                score = self.score * 1000 + self.moved_fields
+                weights.append(new_mutant.get_weights())
+                scores.append(score)
+            scores = np.array(scores)
+            scores_plot.append([scores.mean(), c])
+            c += 1
+            if np.max(scores) > self.highest_score1:
+                crossover_1 = NeuralNetwork.build_small_model()
+                crossover_1.set_weights(weights[scores.argmax()])
+                crossover_1 = crossover_1.compile
+                self.highest_score1 = np.max(scores)
+            print("Highscore 1: " + str(self.highest_score1) + " ///  Mean: " + str(scores.mean()))
+            scores = []
+            weights = []
+            print("Second Loop - " + str(b))
+            for i in range(25):
+                new_mutant2 = NeuralNetwork.small_crossover_into_one(crossover_1, crossover_2)
+                self.reset_game()
+                while True:
+                    output = new_mutant2.predict(self.get_gamestate_4directions(), verbose=0)
+
+                    action = np.argmax(output)
+                    if action == 0:
+                        self.change_to = 'UP'
+                    elif action == 1:
+                        self.change_to = 'DOWN'
+                    elif action == 2:
+                        self.change_to = 'LEFT'
+                    elif action == 3:
+                        self.change_to = 'RIGHT'
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            sys.exit()
+                    self.rest_of_game()
+                    if self.snake_position[0] < 0 or self.snake_position[0] > 50:
+                        break
+                    if self.snake_position[1] < 0 or self.snake_position[1] > 50:
+                        break
+                    for block in self.snake_body[1:]:
+                        if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
+                            break
+
+                    scaled_win = pygame.transform.scale(self.surface, self.window.get_size())
+                    self.window.blit(scaled_win, (0, 0))
+                    pygame.display.flip()
+                score = self.score * 1000 + self.moved_fields
+                weights.append(new_mutant2.get_weights())
+                scores.append(score)
+            scores = np.array(scores)
+            scores_plot.append([scores.mean(), c])
+            c += 1
+            if np.max(scores) > self.highest_score2:
+                crossover_2 = NeuralNetwork.build_small_model()
+                crossover_2.set_weights(weights[scores.argmax()])
+                crossover_2 = crossover_2.compile
+                self.highest_score2 = np.max(scores)
+            print("Highscore 2: " + str(self.highest_score2) + " //// Mean: " + str(scores.mean()))
+            iterations, scores = zip(*scores_plot)
+            plt.plot(scores, iterations)
+            plt.xlabel('Iteration')
+            plt.ylabel('Score')
+            plt.title('Scores over Iterations')
+            plt.show()
+            best_model, best_model2 = NeuralNetwork.cross_over(crossover_1, crossover_2)
+            best_model.save('4Directions1')
+            best_model2.save('4Directions2')
+            crossover_1, crossover_2 = NeuralNetwork.cross_over(crossover_1, crossover_2)
+
 
 game = SnakeGame(200)
-snakeNet1 = keras.models.load_model('genetic1')
-snakeNet2 = keras.models.load_model('genetic2')
-game.train_models(snakeNet1, snakeNet2)
+snakeNet = NeuralNetwork.get_random_model_small()
+snakeNet2 =NeuralNetwork.get_random_model_small()
+game.train_model_genetic_heuristic(snakeNet,snakeNet2)
 
 # snakeNet.save("snakeModel")
