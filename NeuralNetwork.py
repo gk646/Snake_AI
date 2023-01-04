@@ -1,5 +1,4 @@
 import random
-
 import numpy as np
 from keras import initializers
 from tensorflow import keras
@@ -102,22 +101,22 @@ def cross_over_into_new(model1, model2):
 
 def build_small_model():
     model = keras.Sequential()
-    model.add(keras.layers.Dense(units=8, activation='relu', input_shape=(8, )))
+    model.add(keras.layers.Dense(units=8, activation='relu', input_shape=(8,)))
     model.add(keras.layers.Dense(units=16, activation='relu', ))
     model.add(keras.layers.Dense(units=16, activation='relu', ))
-    model.add(keras.layers.Dense(units=8, activation='relu', ))
     model.add(keras.layers.Dense(units=4, activation='softmax'))
 
     model.compile(optimizer='adam',
                   loss='binary_crossentropy',
                   metrics=['accuracy'])
     return model
+
+
 def get_random_model_small():
     model = keras.Sequential()
     model.add(keras.layers.Dense(units=8, activation='relu', input_shape=(8,)))
     model.add(keras.layers.Dense(units=16, activation='relu', kernel_initializer=initializers.random_normal))
     model.add(keras.layers.Dense(units=16, activation='relu', kernel_initializer=initializers.random_normal))
-    model.add(keras.layers.Dense(units=8, activation='relu', kernel_initializer=initializers.random_normal))
     model.add(keras.layers.Dense(units=4, activation='softmax', kernel_initializer=initializers.random_normal))
 
     model.compile(optimizer='adam',
@@ -125,17 +124,56 @@ def get_random_model_small():
                   metrics=['accuracy'])
     return model
 
+
 def small_crossover_into_one(model1, model2):
     new_model = build_small_model()
+    random_model = get_random_model_small()
+    random_weights = random_model.get_weights()
     new_weights = new_model.get_weights()
     weights1 = model1.get_weights()
     weights2 = model2.get_weights()
 
     crossover_point = random.randint(0, len(new_weights))
 
-    new_weights[crossover_point:] = weights2[crossover_point:]
-    new_weights[:crossover_point] = weights1[:crossover_point]
+    new_weights[crossover_point:] = weights1[crossover_point:]
+    new_weights[:crossover_point] = weights2[:crossover_point]
+
+    start_index = random.randint(0, len(new_weights))
+    for i in range(start_index, start_index + int(len(new_weights) * 0.1)):
+        new_weights[i] = random_weights[i]
 
     new_model.set_weights(new_weights)
+    new_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    return new_model
+
+
+def get_small_raw():
+    model = keras.Sequential()
+    model.add(keras.layers.Dense(units=8, activation='relu', input_shape=(8,)))
+    model.add(keras.layers.Dense(units=16, activation='relu', ))
+    model.add(keras.layers.Dense(units=16, activation='relu', ))
+    model.add(keras.layers.Dense(units=8, activation='relu', ))
+    model.add(keras.layers.Dense(units=4, activation='softmax'))
+    return model
+
+
+def local_compile(model):
+    model.compile(optimizer='adam',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+    return model
+
+
+def new_mutant_10_percent(model1):
+    new_model = get_random_model_small()
+    new_weights = new_model.get_weights()
+    weights1 = model1.get_weights()
+
+    start_index = random.randint(0, len(weights1)-1)
+    if random.randrange(0, 1, 1) == 1:
+        weights1[start_index] = weights1[start_index] + new_weights[start_index]
+    else:
+        weights1[start_index] = weights1[start_index] - new_weights[start_index]
+    new_model.set_weights(weights1)
     new_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     return new_model
