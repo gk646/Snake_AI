@@ -44,6 +44,7 @@ class SnakeGame:
         self.change_to = self.direction
         self.score = 0
         self.moved_fields = 0
+        self.average = 0
 
     def rest_of_game(self):
         if self.change_to == 'UP' and self.direction != 'DOWN':
@@ -235,7 +236,7 @@ class SnakeGame:
         input_array = input_array.reshape((-1, 8))
         player_moves = np.array(player_moves)
         print((input_array.shape, player_moves.shape))
-        model.fit(input_array, player_moves, epochs=25)
+        model.fit(input_array, player_moves, epochs=50)
         model.save('model_help1')
 
     def reset_game(self):
@@ -505,9 +506,6 @@ class SnakeGame:
                     if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
                         break
 
-                scaled_win = pygame.transform.scale(self.surface, self.window.get_size())
-                self.window.blit(scaled_win, (0, 0))
-                pygame.display.update()
             score = self.score * 50 + self.moved_fields
             scores_plot.append([score, c])
             c += 1
@@ -527,9 +525,10 @@ class SnakeGame:
         plt.title('Scores over Iterations')
         plt.show()
         print(mode_save_name + " / " + str((max(iterations))) + " / " + str(statistics.mean(iterations)))
+        self.average = statistics.mean(iterations)
 
 
-def genetic():
+def genetic(input_model_name):
     pygame.font.init()
     screen1 = pygame.display.set_mode((500, 500))
     screen2 = pygame.display.set_mode((500, 500))
@@ -538,7 +537,7 @@ def genetic():
     game3 = SnakeGame(0, screen2)
     game4 = SnakeGame(0, screen2)
     game5 = SnakeGame(0, screen2)
-    snakeNet1 = keras.models.load_model('new_genetic4')
+    snakeNet1 = keras.models.load_model(input_model_name)
     high_score = 0
     thread1 = threading.Thread(target=game1.new_genetic_try, args=(snakeNet1, 'new_genetic1', high_score))
     thread2 = threading.Thread(target=game2.new_genetic_try, args=(snakeNet1, 'new_genetic2', high_score))
@@ -556,17 +555,35 @@ def genetic():
     time.sleep(1)
     thread5.start()
 
+    thread1.join()
+    thread2.join()
+    thread3.join()
+    thread4.join()
+    thread5.join()
+    print("Total Average: " + str((game1.average + game2.average + game3.average + game4.average + game5.average) / 5))
+    f = open('averages.txt', 'a')
+    f.write(
+        "\n" + str((game1.average + game2.average + game3.average + game4.average + game5.average) / 5) + " // " + str(
+            game1.average) + "/" +
+        str(game2.average) + "/" +
+        str(game3.average) + "/" +
+        str(game4.average) + "/" +
+        str(game5.average))
+    f.close()
 
-def record():
-    snakeNetHelp = keras.models.load_model('model_help1')
+
+def record(model_name):
+    snakeNetHelp = keras.models.load_model(model_name)
     screen1 = pygame.display.set_mode((500, 500))
     game = SnakeGame(5, screen1)
     game.record(snakeNetHelp)
 
-def test():
-    snakeNetHelp = keras.models.load_model('new_genetic4')
+
+def test(model_name):
+    snakeNetHelp = keras.models.load_model(model_name)
     screen1 = pygame.display.set_mode((500, 500))
     game = SnakeGame(0, screen1)
     game.play_with_ai(snakeNetHelp)
-test()
-#4 is the best
+
+genetic('new_genetic1')
+# 1 is the best
