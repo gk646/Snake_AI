@@ -564,7 +564,7 @@ def genetic(input_model_name):
     thread4.join()
     thread5.join()
     print("Total Average: " + str((game1.average + game2.average + game3.average + game4.average + game5.average) / 5))
-    f = open('averages.txt', 'a')
+    f = open('../averages.txt', 'a')
     f.write(
         "\n" + str((game1.average + game2.average + game3.average + game4.average + game5.average) / 5) + " // " + str(
             game1.average) + "/" +
@@ -576,7 +576,7 @@ def genetic(input_model_name):
 
 
 def record(model_name):
-    snakeNetHelp = keras.models.load_model('model_help1')
+    snakeNetHelp = keras.models.load_model('../model_help1')
     screen1 = pygame.display.set_mode((500, 500))
     game = SnakeGame(5, screen1)
     game.record(snakeNetHelp)
@@ -621,7 +621,7 @@ def genetic_multi(input_model_name):
     p4.join()
     p5.join()
     print("Total Average: " + str((game1.average + game2.average + game3.average + game4.average + game5.average) / 5))
-    f = open('averages.txt', 'a')
+    f = open('../averages.txt', 'a')
     f.write(
         "\n" + str((game1.average + game2.average + game3.average + game4.average + game5.average) / 5) + " // " + str(
             game1.average) + "/" +
