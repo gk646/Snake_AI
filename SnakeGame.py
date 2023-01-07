@@ -5,7 +5,7 @@ import time
 import threading
 import pygame
 import random
-import NeuralNetwork
+from src import NeuralNetwork
 import numpy as np
 
 import keras

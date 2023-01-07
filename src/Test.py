@@ -28,7 +28,7 @@ def genetic_multi(input_model_name):
 
     print("Total Average: " + str(
         (game1.average + game2.average + game3.average + game4.average) / 4))
-    f = open('averages.txt', 'a')
+    f = open('../averages.txt', 'a')
     f.write(
         "\n" + str(
             (game1.average + game2.average + game3.average + game4.average) / 4) + " // " + str(
