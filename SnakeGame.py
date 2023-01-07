@@ -324,5 +324,5 @@ def test(model_name):
 
 
 
-genetic('new_genetic1')
+genetic('new_genetic2')
 # 1 is the best
