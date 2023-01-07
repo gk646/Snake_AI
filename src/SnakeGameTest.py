@@ -239,7 +239,7 @@ class SnakeGame:
         input_array = input_array.reshape((-1, 8))
         player_moves = np.array(player_moves)
         print((input_array.shape, player_moves.shape))
-        model.fit(input_array, player_moves, epochs=50)
+        model.fit(input_array, player_moves, epochs=25)
         model.save('model_help1')
 
     def reset_game(self):
@@ -529,7 +529,55 @@ class SnakeGame:
         plt.show()
         print(mode_save_name + " / " + str((max(iterations))) + " / " + str(statistics.mean(iterations)))
         self.average = statistics.mean(iterations)
+    def test_50(self,model):
+        scores_plot = []
+        c = 0
+        for i in range(50):
+            self.reset_game()
+            while True:
+                output = model.predict(self.get_gamestate_4directions(), verbose=0)
+                action = np.argmax(output)
+                if action == 0:
+                    self.change_to = 'UP'
+                elif action == 1:
+                    self.change_to = 'DOWN'
+                elif action == 2:
+                    self.change_to = 'LEFT'
+                elif action == 3:
+                    self.change_to = 'RIGHT'
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                self.rest_of_game()
+                if self.snake_position[0] < 0 or self.snake_position[0] > 50:
+                    break
+                if self.snake_position[1] < 0 or self.snake_position[1] > 50:
+                    break
 
+                for block in self.snake_body[1:]:
+                    if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
+                        break
+                scaled_win = pygame.transform.scale(self.surface, self.window.get_size())
+                self.window.blit(scaled_win, (0, 0))
+                pygame.display.flip()
+                # Refresh game screen
+                pygame.display.update()
+                # Frame Per Second /Refresh Rate
+                self.fps.tick(self.snake_speed)
+
+            score = self.score * 50 + self.moved_fields
+            scores_plot.append([score, c])
+            c += 1
+            if i % 25 == 0:
+                print(i)
+        iterations, scores = zip(*scores_plot)
+        plt.plot(scores, iterations)
+        plt.xlabel('Iteration')
+        plt.ylabel('Score')
+        plt.title('Scores over Iterations')
+        plt.show()
+        print(str((max(iterations))) + " / " + str(statistics.mean(iterations)))
 
 def genetic(input_model_name):
     pygame.font.init()
@@ -564,7 +612,7 @@ def genetic(input_model_name):
     thread4.join()
     thread5.join()
     print("Total Average: " + str((game1.average + game2.average + game3.average + game4.average + game5.average) / 5))
-    f = open('../averages.txt', 'a')
+    f = open('averages.txt', 'a')
     f.write(
         "\n" + str((game1.average + game2.average + game3.average + game4.average + game5.average) / 5) + " // " + str(
             game1.average) + "/" +
@@ -586,7 +634,7 @@ def test(model_name):
     snakeNetHelp = keras.models.load_model(model_name)
     screen1 = pygame.display.set_mode((500, 500))
     game = SnakeGame(0, screen1)
-    game.play_with_ai(snakeNetHelp)
+    game.test_50(snakeNetHelp)
 
 
 def genetic_multi(input_model_name):
@@ -621,7 +669,7 @@ def genetic_multi(input_model_name):
     p4.join()
     p5.join()
     print("Total Average: " + str((game1.average + game2.average + game3.average + game4.average + game5.average) / 5))
-    f = open('../averages.txt', 'a')
+    f = open('averages.txt', 'a')
     f.write(
         "\n" + str((game1.average + game2.average + game3.average + game4.average + game5.average) / 5) + " // " + str(
             game1.average) + "/" +
@@ -631,6 +679,6 @@ def genetic_multi(input_model_name):
         str(game5.average))
     f.close()
 
-#record('model_help1')
-test('model_help1')
+#record('../model_help1')
+test('../model_help1')
 # 1 is the best
