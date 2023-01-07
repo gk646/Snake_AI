@@ -169,11 +169,12 @@ def new_mutant_10_percent(model1):
     new_weights = new_model.get_weights()
     weights1 = model1.get_weights()
 
-    start_index = random.randint(0, len(weights1)-1)
-    if random.randrange(0, 1, 1) == 1:
-        weights1[start_index] = weights1[start_index] + new_weights[start_index]
-    else:
-        weights1[start_index] = weights1[start_index] - new_weights[start_index]
+    start_index = random.randint(0, len(weights1) -1)
+    for i in range(start_index, min(len(weights1)-1,  int(start_index + 0.1 * len(weights1)-1))):
+        if random.randrange(0, 1, 1) == 1:
+            weights1[i] = weights1[i] + new_weights[i]
+        else:
+            weights1[i] = weights1[i] - new_weights[i]
     new_model.set_weights(weights1)
     new_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     return new_model
