@@ -171,7 +171,7 @@ class SnakeGame:
         input_array = np.array([])
         player_moves = []
         while not self.game_over_variable:
-            input_array = np.append(input_array, self.get_gamestate_4directions())
+            input_array = np.append(input_array, self.get_game_state_2directions())
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -250,10 +250,10 @@ class SnakeGame:
             pygame.display.flip()
             pygame.display.update()
             self.fps.tick(self.snake_speed)
-        input_array = input_array.reshape((-1, 8))
+        input_array = input_array.reshape((-1, 4))
         player_moves = np.array(player_moves)
-        # model.fit(input_array, player_moves, epochs=25)
-        # model.save(model_name)
+        model.fit(input_array, player_moves, epochs=50)
+        model.save(model_name)
         with open('../training_data/arrays' + str(num) + '.csv', 'x') as f:
             np.savetxt(f, input_array, delimiter=',', fmt='%.0f')
             np.savetxt(f, player_moves, delimiter=',', fmt='%.0f')
@@ -552,7 +552,7 @@ class SnakeGame:
         for i in range(25):
             self.reset_game()
             while True:
-                output = model.predict(self.get_gamestate_4directions(), verbose=0)
+                output = model.predict(self.get_game_state_2directions(), verbose=0)
                 action = np.argmax(output)
                 if action == 0:
                     self.change_to = 'UP'
@@ -609,7 +609,6 @@ def load_and_train(num, model_name, epochs):
         y_train = np.loadtxt('../training_data/arrays' + str(num) + '.csv', delimiter=',', skiprows=(int(num_lines / 2)))
     model.fit(x_train, y_train, epochs=epochs)
     game = SnakeGame(0, screen1)
-    game.reset_game()
     game.test_50(model)
 
 
@@ -715,7 +714,8 @@ def genetic_multi(input_model_name):
     f.close()
 
 
-load_and_train(2,'model_help1',100)
-#record('../model_help1',2)
-#test('../new_genetic1')
+#keras.models.load_model('../model_help1').summary()
+#load_and_train(11,'model_help2',100)
+record('../model_help2',12)
+#test('../model_help2')
 # 1 is the best
