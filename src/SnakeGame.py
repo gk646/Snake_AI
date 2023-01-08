@@ -276,11 +276,11 @@ def genetic(input_model_name):
     game5 = SnakeGame(0)
     snakeNet1 = keras.models.load_model(input_model_name)
     high_score = 68
-    thread1 = threading.Thread(target=game1.new_genetic_try, args=(snakeNet1, 'new_genetic1', high_score))
-    thread2 = threading.Thread(target=game2.new_genetic_try, args=(snakeNet1, 'new_genetic2', high_score))
-    thread3 = threading.Thread(target=game3.new_genetic_try, args=(snakeNet1, 'new_genetic3', high_score))
-    thread4 = threading.Thread(target=game4.new_genetic_try, args=(snakeNet1, 'new_genetic4', high_score))
-    thread5 = threading.Thread(target=game5.new_genetic_try, args=(snakeNet1, 'new_genetic5', high_score))
+    thread1 = threading.Thread(target=game1.new_genetic_try, args=(snakeNet1, '../new_genetic1', high_score))
+    thread2 = threading.Thread(target=game2.new_genetic_try, args=(snakeNet1, '../new_genetic2', high_score))
+    thread3 = threading.Thread(target=game3.new_genetic_try, args=(snakeNet1, '../new_genetic3', high_score))
+    thread4 = threading.Thread(target=game4.new_genetic_try, args=(snakeNet1, '../new_genetic4', high_score))
+    thread5 = threading.Thread(target=game5.new_genetic_try, args=(snakeNet1, '../new_genetic5', high_score))
 
     thread1.start()
     time.sleep(1)
@@ -324,5 +324,5 @@ def test(model_name):
 
 
 
-genetic('new_genetic2')
+genetic('../model_help1')
 # 1 is the best

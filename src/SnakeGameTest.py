@@ -1,3 +1,4 @@
+import csv
 import multiprocessing as mp
 import statistics
 import sys
@@ -152,7 +153,21 @@ class SnakeGame:
                           distance_from_wall_right, distance_from_food_up, distance_from_food_left,
                           distance_from_food_down, distance_from_food_right]])
 
-    def record(self, model):
+    def get_game_state_2directions(self):
+        distance_from_food_up = abs(self.fruit_position[0] - self.snake_position[0]) + abs(
+            self.fruit_position[1] - self.snake_position[1] + 1)
+        distance_from_food_left = abs(self.fruit_position[0] - self.snake_position[0] - 1) + abs(
+            self.fruit_position[1] - self.snake_position[1])
+        distance_from_food_down = abs(self.fruit_position[0] - self.snake_position[0]) + abs(
+            self.fruit_position[1] - self.snake_position[1] - 1)
+        distance_from_food_right = abs(self.fruit_position[0] - self.snake_position[0] + 1) + abs(
+            self.fruit_position[1] - self.snake_position[1])
+
+        # distance from snake
+        return np.array([[distance_from_food_up, distance_from_food_left,
+                          distance_from_food_down, distance_from_food_right]])
+
+    def record(self, model, model_name, num):
         input_array = np.array([])
         player_moves = []
         while not self.game_over_variable:
@@ -235,12 +250,13 @@ class SnakeGame:
             pygame.display.flip()
             pygame.display.update()
             self.fps.tick(self.snake_speed)
-
         input_array = input_array.reshape((-1, 8))
         player_moves = np.array(player_moves)
-        print((input_array.shape, player_moves.shape))
-        model.fit(input_array, player_moves, epochs=25)
-        model.save('model_help1')
+        # model.fit(input_array, player_moves, epochs=25)
+        # model.save(model_name)
+        with open('../training_data/arrays' + str(num) + '.csv', 'x') as f:
+            np.savetxt(f, input_array, delimiter=',', fmt='%.0f')
+            np.savetxt(f, player_moves, delimiter=',', fmt='%.0f')
 
     def reset_game(self):
         self.snake_position = [25, 25]
@@ -529,10 +545,11 @@ class SnakeGame:
         plt.show()
         print(mode_save_name + " / " + str((max(iterations))) + " / " + str(statistics.mean(iterations)))
         self.average = statistics.mean(iterations)
-    def test_50(self,model):
+
+    def test_50(self, model):
         scores_plot = []
         c = 0
-        for i in range(50):
+        for i in range(25):
             self.reset_game()
             while True:
                 output = model.predict(self.get_gamestate_4directions(), verbose=0)
@@ -579,6 +596,23 @@ class SnakeGame:
         plt.show()
         print(str((max(iterations))) + " / " + str(statistics.mean(iterations)))
 
+
+def load_and_train(num, model_name, epochs):
+    model = keras.models.load_model('../' + model_name)
+    screen1 = pygame.display.set_mode((500, 500))
+    with open('../training_data/arrays' + str(num) + '.csv') as f:
+        # Create a CSV reader
+        reader = csv.reader(f)
+        # Count the number of lines in the file
+        num_lines = len(list(reader))
+        x_train = np.loadtxt('../training_data/arrays' + str(num) + '.csv', delimiter=',', max_rows=(int(num_lines / 2)))
+        y_train = np.loadtxt('../training_data/arrays' + str(num) + '.csv', delimiter=',', skiprows=(int(num_lines / 2)))
+    model.fit(x_train, y_train, epochs=epochs)
+    game = SnakeGame(0, screen1)
+    game.reset_game()
+    game.test_50(model)
+
+
 def genetic(input_model_name):
     pygame.font.init()
     screen1 = pygame.display.set_mode((500, 500))
@@ -623,11 +657,12 @@ def genetic(input_model_name):
     f.close()
 
 
-def record(model_name):
-    snakeNetHelp = keras.models.load_model('../model_help1')
+def record(model_name, num):
+    snakeNetHelp = keras.models.load_model(model_name)
     screen1 = pygame.display.set_mode((500, 500))
-    game = SnakeGame(5, screen1)
-    game.record(snakeNetHelp)
+    game = SnakeGame(11, screen1)
+    game.record(snakeNetHelp, model_name, num)
+    print(game.score * 50 + game.moved_fields)
 
 
 def test(model_name):
@@ -679,6 +714,8 @@ def genetic_multi(input_model_name):
         str(game5.average))
     f.close()
 
-#record('../model_help1')
-test('../model_help1')
+
+load_and_train(2,'model_help1',100)
+#record('../model_help1',2)
+#test('../new_genetic1')
 # 1 is the best
