@@ -552,7 +552,7 @@ class SnakeGame:
         for i in range(25):
             self.reset_game()
             while True:
-                output = model.predict(self.get_game_state_2directions(), verbose=0)
+                output = model.predict(self.get_gamestate_4directions(), verbose=0)
                 action = np.argmax(output)
                 if action == 0:
                     self.change_to = 'UP'
@@ -716,6 +716,6 @@ def genetic_multi(input_model_name):
 
 #keras.models.load_model('../model_help1').summary()
 #load_and_train(11,'model_help2',100)
-record('../model_help2',12)
-#test('../model_help2')
+#record('../model_help2',12)
+test('../model_help1')
 # 1 is the best
